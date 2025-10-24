@@ -152,10 +152,24 @@ def collect_korean_stock_data(
 # ---------------------------
 # Entrypoint
 # ---------------------------
+# ---------------------------
+# Entrypoint
+# ---------------------------
 def main() -> None:
-    output_dir = ensure_directory(DATA_DIR)
+    # ✅ Google Drive 마운트
+    try:
+        from google.colab import drive
+        drive.mount("/content/drive")
+        print("[INFO] Google Drive mounted successfully.")
+        base_dir = Path("/content/drive/MyDrive/krx_data")
+    except Exception as e:
+        print(f"[WARN] Google Drive mount failed: {e}")
+        print("[INFO] 로컬 data 폴더에 저장합니다.")
+        base_dir = Path("data")
 
-    # (원본 JSON 스냅샷 아카이브) 외부 공개 API들
+    output_dir = ensure_directory(base_dir)
+
+    # 외부 API들
     endpoints = [
         APIEndpoint(
             name="public_apis",
@@ -200,9 +214,10 @@ def main() -> None:
         ),
     ]
 
+    # 외부 API 수집
     collect_external_apis(endpoints, output_dir)
 
-    # ★ 5년치: days=1825 로 변경 ★
+    # 삼성전자 5년치 데이터
     collect_korean_stock_data(
         ticker="005930",
         days=1825,                  # 약 5년
@@ -212,6 +227,9 @@ def main() -> None:
     )
 
     print(f"[INFO] 모든 데이터가 {output_dir} 디렉터리에 저장되었습니다.")
+    print(f"[INFO] Google Drive 경로: {output_dir.resolve()}")
+    print("[INFO] 예시 파일:")
+    print(f" - {output_dir / 'krx_005930.csv'}")
 
 
 if __name__ == "__main__":
